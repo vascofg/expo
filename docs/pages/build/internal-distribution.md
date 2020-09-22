@@ -20,7 +20,7 @@ Open up `eas.json` and add a new build profile for iOS and/or Android.
     "android": {
       "preview": {
         "workflow": "generic",
-        /* @info valid values: store, internal. defaults to store */
+        /* @info valid values: store, internal, emulator. defaults to store */
         "distribution": "internal" /* @end */
 
       }
@@ -28,7 +28,7 @@ Open up `eas.json` and add a new build profile for iOS and/or Android.
     "ios": {
       "preview": {
         "workflow": "generic",
-        /* @info valid values: store, internal. defaults to store */
+        /* @info valid values: store, internal, emulator. defaults to store */
         "distribution": "internal" /* @end */
 
       }
@@ -49,19 +49,19 @@ We can configure our credentials by doing a dry run of our build:
 
 <TerminalBlock cmd={['expo eas:build --profile preview --platform ios --dry-run']} />
 
-When you reach the provisioning profile prompt, choose "Let Expo handle the process".
+If you plan on using enterprise provisioning, please sign in to the account with [Apple Developer Enterprise Program membership](https://developer.apple.com/programs/enterprise/). You probably don't have this, and it's expensive ($299 USD per year) and takes time to acquire, so you will likely be using adhoc provisioning &mdash; this works on any normal paid Apple developer account.
 
-If your Apple Developer account has access to enteprise provisioning, you will be prompted to select between adhoc or enterprise provisioning.
+When you reach the provisioning profile prompt, choose "Let Expo handle the process" and we'll create an enterprise or adhoc provisioning profile for you, depending on what your account is capable of.
 
 #### Setting up enterprise provisioning
 
-Enterprise provisioning is expensive and you probably don't have it, but if you do, this makes internal distribution much easier. Expo's credentials service will handle creating a provisioning profile and assigning to your app for future builds, no additional work is needed.
+If you do have an Apple enterprise account, this makes internal distribution much easier for users who want to install your app for the first time. Once they install the profile to their device they can access the app right away. One limitation of using an enterprise provisioning profile is that you will need to have a distinct bundle identifier from the one that you use to publish your app to the App Store.<!-- after this is a bad idea intentionally, we should probably have a config option, i'm just putting it there so we have something for now  --> We recommend setting your bundle identifier for internal distribution and committing that change on another branch. After that, whenever you want to create a preview branch you can check out that branch and rebase against the branch you'd like to create a build for.
 
 #### Setting up adhoc provisioning
 
 Apps signed with an adhoc provisioning profile can be installed by any iOS device whose unique identifier (UDID) is registered with the profile.
 
-When you select adhoc provisioning, we will create a new adhoc profile for you and include every device that is currently registered in your Apple Developer acccount in the profile. You will then be prompted to register a new device.
+When we create a new adhoc profile for you we will include every device that is currently registered in your Apple Developer acccount in the profile. You will then be prompted to register a new device.
 
 If the device you would like to distribute to is not currently registered, you can do it now. Scan the QR code that is presented in the terminal and follow the instructions on that page to register your device. When you're done, return to the terminal and press return to continue. You should see that your new device registration has been detected and added to the profile.
 
