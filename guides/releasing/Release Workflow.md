@@ -25,10 +25,11 @@
   - [3.1. Publish any missing or changed packages](#31-publish-any-missing-or-changed-packages)
   - [3.2. Publishing next project templates](#32-publishing-next-project-templates)
 - [Stage 4 - Expo client](#stage-4---expo-client)
-  - [4.1. Releasing beta version](#41-releasing-beta-version)
-  - [4.2. Making a simulator build](#42-making-a-simulator-build)
-  - [4.3. Submit iOS client to App Store Review](#43-submit-ios-client-to-app-store-review)
-  - [4.4. Release clients to external beta testers](#44-release-clients-to-external-beta-testers)
+  - [4.1. Publish home](#41-publish-home)
+  - [4.2. Releasing beta version](#42-releasing-beta-version)
+  - [4.3. Making a simulator build](#43-making-a-simulator-build)
+  - [4.4. Submit iOS client to App Store Review](#44-submit-ios-client-to-app-store-review)
+  - [4.5. Release clients to external beta testers](#45-release-clients-to-external-beta-testers)
 - [Stage 5 - Standalone apps](#stage-5---standalone-apps)
   - [5.1. Updating JS dependencies required for build](#51-updating-js-dependencies-required-for-build)
   - [5.2. Make shell app build](#52-make-shell-app-build)
@@ -151,6 +152,7 @@
 
 - Do this step immediately before cutting the release branch.
 - Run `et generate-sdk-docs --sdk XX.X.X` to generate versioned docs for the new SDK. If we've upgraded React Native version in this release, we should also use `--update-react-native-docs` flag which imports the current version of React Native docs that also show up on our docs page. (If there are issues with this, talk with @byCedric.)
+- Run `yarn run schema-sync XX` (`XX` being the major version number) and then change the schema import in `pages/versions/<version>/config/app.md` from `unversioned` to the new versioned schema file.
 - Ensure that the `version` in package.json has NOT been updated to the new SDK version. SDK versions greater than the `version` in package.json will be hidden in production docs, and we do not want the new version to show up until the SDK has been released.
 - Commit and push changes to master.
 
@@ -321,11 +323,28 @@ Web is comparatively well-tested in CI, so a few manual smoke tests suffice for 
 
 # Stage 4 - Expo client
 
-## 4.1. Releasing beta version
+## 4.1. Publish home
+
+| Prerequisites |
+| --- |
+| [1.3. Unversioned Quality Assurance](#13-unversioned-quality-assurance) |
+
+**Why:** We need to publish a new version of home in order to embed it in the clients before building them.
+
+**How:**
+
+- Update `version` and `sdkVersion` in `home/app.json`. Commit this change.
+- Make sure to run `yarn` in `home`.
+- Publish dev home first by running `et publish-dev-home`. Commit the change to `dev-home-config.json`; do not commit any other changes from the script (in particular, if it changes `home/app.json`, do not commit those changes).
+- Run a debug build of both the iOS and Android clients to smoke test the newly published dev home.
+- To publish production home, log into expo-cli with the `exponent` account (credentials in 1P). Then publish home with `EXPO_NO_DOCTOR=true expo publish`. This will publish home to production (making it available as an OTA update for the SDK version in `app.json`) and write changes to two manifests and bundles (one each for iOS and Android) in the repo. Commit these changes.
+
+## 4.2. Releasing beta version
 
 | Prerequisites                                                                               |
 | ------------------------------------------------------------------------------------------- |
 | [3.1. Publish any missing or changed packages](#31-publish-any-missing-or-changed-packages) |
+| [4.1. Publish home](#41-publish-home)                                                       |
 
 **Why:** As we already published prerelease versions of the packages, now we can publish prerelease version of the client.
 
@@ -346,11 +365,11 @@ Web is comparatively well-tested in CI, so a few manual smoke tests suffice for 
   - Bump the `versionCode` and `versionName` in android/app/build.gradle. Commit this to master and cherry-pick to the release branch. You might need to check the previous release branch to make sure the new `versionCode` is greater than the previous patch version, in case that commit never made it to master.
   - The APK will be available as an artifact from the `client_android` CI job. If no CI jobs are running on the release branch, you just need to open a PR from the release branch to master. (Don't merge it; it only exists to make CI jobs run.)
 
-## 4.2. Making a simulator build
+## 4.3. Making a simulator build
 
 | Prerequisites                                             |
 | --------------------------------------------------------- |
-| [4.1. Releasing beta version](#41-releasing-beta-version) |
+| [4.2. Releasing beta version](#42-releasing-beta-version) |
 
 **Why:** To allow our users install Expo client on the simulator (which doesn't have an App Store) we need to make a build for it, upload it to S3 servers and save its url and version on the versions endpoint. These builds are then downloaded and installed by the users using `expo client:install:ios`.
 
@@ -359,11 +378,11 @@ Web is comparatively well-tested in CI, so a few manual smoke tests suffice for 
 - Run `et dispatch client-{ios,android}-simulator` to trigger building the client for simulator, uploading the archive to S3 and updating URL in versions endpoint.
 - Once the job is finished, test if this simulator build work as expected. You can install and launch it using expotools command `et client-install -p {ios,android}`.
 
-## 4.3. Submit iOS client to App Store Review
+## 4.4. Submit iOS client to App Store Review
 
 | Prerequisites                                             |
 | --------------------------------------------------------- |
-| [4.1. Releasing beta version](#41-releasing-beta-version) |
+| [4.2. Releasing beta version](#42-releasing-beta-version) |
 
 **Why:**
 
@@ -374,12 +393,12 @@ Web is comparatively well-tested in CI, so a few manual smoke tests suffice for 
   - “Yes”, we use the IDFA, check the boxes in this Segment guide: [https://segment.com/docs/sources/mobile/ios/quickstart/](https://segment.com/docs/sources/mobile/ios/quickstart/).
   - “Serve advertisements within the app” should not be checked.
 
-## 4.4. Release clients to external beta testers
+## 4.5. Release clients to external beta testers
 
 | Prerequisites                                                                   |
 | ------------------------------------------------------------------------------- |
 | [3.2. Publishing next project templates](#32-publishing-next-project-templates) |
-| [4.1. Releasing beta version](#41-releasing-beta-version)                       |
+| [4.2. Releasing beta version](#42-releasing-beta-version)                    |
 
 **Why:**
 
@@ -495,6 +514,8 @@ Once everything above is completed and Apple has approved the iOS client, the fi
   - `react-native-unimodules`
 - One way to get the right version numbers is to run `yarn why <package-name>` to see which version is used by apps in the expo/expo repo. Generally the version numbers should have a carat (`^`) except for `react-native-unimodules`, which should have a tilde (`~`).
 
+- This is also a good time to add the `isDeprecated` flag to the SDK version we're dropping, if it isn't there already.
+
 ## 6.5. Promote versions to production
 
 | Prerequisites                                                                                   |
@@ -572,8 +593,8 @@ This should be ready to publish immediately after the previous step is finished!
 
 | Prerequisites                                                 |
 | ------------------------------------------------------------- |
-| [4.1. Releasing beta version](#41-releasing-beta-version)     |
-| [4.2. Making a simulator build](#42-making-a-simulator-build) |
+| [4.2. Releasing beta version](#42-releasing-beta-version)   |
+| [4.3. Making a simulator build](#43-making-a-simulator-build) |
 
 **Why:** Once the new SDK is available publicly, we need to update Snack to support that SDK.
 
