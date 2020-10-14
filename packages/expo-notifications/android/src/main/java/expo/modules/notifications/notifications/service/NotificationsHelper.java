@@ -103,7 +103,7 @@ public class NotificationsHelper {
    * @param receiver A receiver to which send the notifications
    */
   public void getAllPresented(@Nullable ResultReceiver receiver) {
-    NotificationsService.Companion.enqueueGetAllPresented(mContext, receiver);
+    NotificationsService.Companion.getAllPresented(mContext, receiver);
   }
 
   /**
@@ -114,7 +114,7 @@ public class NotificationsHelper {
    * @param receiver     A receiver to which send the result of presenting the notification
    */
   public void presentNotification(@NonNull Notification notification, @Nullable NotificationBehavior behavior, @Nullable ResultReceiver receiver) {
-    NotificationsService.Companion.enqueuePresent(mContext, notification, behavior, receiver);
+    NotificationsService.Companion.present(mContext, notification, behavior, receiver);
   }
 
   /**
@@ -140,7 +140,7 @@ public class NotificationsHelper {
       notifyReceiverSuccess(receiver, null);
     } else {
       // Receiver is notified by NotificationsService
-      NotificationsService.Companion.enqueuePresent(mContext, notification, null, receiver);
+      NotificationsService.Companion.present(mContext, notification, null, receiver);
     }
   }
 
@@ -150,7 +150,7 @@ public class NotificationsHelper {
    * @param identifier Notification identifier
    */
   public void dismiss(@NonNull String identifier, @Nullable ResultReceiver receiver) {
-    NotificationsService.Companion.enqueueDismiss(mContext, new String[]{identifier}, receiver);
+    NotificationsService.Companion.dismiss(mContext, new String[]{identifier}, receiver);
   }
 
   /**
@@ -159,14 +159,14 @@ public class NotificationsHelper {
    * @param identifiers Notification identifiers
    */
   public void enqueueDismissSelected(@NonNull String[] identifiers, @Nullable ResultReceiver receiver) {
-    NotificationsService.Companion.enqueueDismiss(mContext, identifiers, receiver);
+    NotificationsService.Companion.dismiss(mContext, identifiers, receiver);
   }
 
   /**
    * A helper function for dispatching all notification
    */
   public void dismissAll(@Nullable ResultReceiver receiver) {
-    NotificationsService.Companion.enqueueDismissAll(mContext, receiver);
+    NotificationsService.Companion.dismissAll(mContext, receiver);
   }
 
   /**
